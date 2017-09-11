@@ -3,3 +3,6 @@
 ## Word2Vec
 
 ## XGBoost
+
+## Recommendation
+Keywords: DNN, Embedding, Softmax, Wide & Deep Model 
