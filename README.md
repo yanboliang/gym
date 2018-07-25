@@ -1,8 +1,5 @@
 # play-deep-learning
 
-## Word2Vec
+TL;DR
 
-## XGBoost
-
-## Recommendation
-Keywords: DNN, Embedding, Softmax, Wide & Deep Model 
+[Deep Residual Learning for Image Recognition](https://arxiv.org/abs/1512.03385)
