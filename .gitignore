@@ -1,1 +1,5 @@
 .DS_Store
+.idea/
+transformer/.idea/
+*.pyc
+__pycache__/*
