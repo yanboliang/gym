@@ -24,14 +24,13 @@ def tf_loss_fn(logits, targets, label_smoothing, vocab_size):
 
 
 def k_loss_fn(logits, targets, label_smoothing, vocab_size):
-    onehot_targets = tf.one_hot(targets, depth=vocab_size)
     params = KParams()
     params.vocab_size = vocab_size
     params.label_smoothing = label_smoothing
 
     k_transformer = KTransformer(params)
     loss_fn = k_transformer.get_loss()
-    return loss_fn(onehot_targets, logits, with_xent=True)
+    return loss_fn(targets, logits, with_xent=True)
 
 
 if __name__ == '__main__':

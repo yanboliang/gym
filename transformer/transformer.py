@@ -4,6 +4,7 @@ from __future__ import print_function
 
 from keras import Input, Model
 from keras.layers import Wrapper
+from keras import backend as K
 
 from attention import Attention, SelfAttention
 from ffn import FeedFowardNetwork
@@ -87,7 +88,7 @@ class Transformer(Model):
 
         def transformer_loss(y_true, y_pred, with_xent=False):
             """
-            :param y_true: onehot labels: Tensor of size [batch_size, length_labels, vocab_size]
+            :param y_true: labels: Tensor of size [batch_size, length_labels]
             :param y_pred: logits: Tensor of size [batch_size, length_logits, vocab_size]
             :return: loss
             """
@@ -96,7 +97,13 @@ class Transformer(Model):
 
             logits = y_pred
 
-            soft_targets = y_true * (confidence - low_confidence) + low_confidence
+            y_pred_shape = K.shape(y_pred)
+            y_true = K.reshape(y_true, [y_pred_shape[0], y_pred_shape[1]])
+
+            y_true = K.cast(y_true, dtype='int32')
+            y_true_ohe = K.one_hot(y_true, num_classes=vocab_size)
+
+            soft_targets = y_true_ohe * (confidence - low_confidence) + low_confidence
             xentropy = K.categorical_crossentropy(soft_targets, logits, from_logits=True)
 
             # Calculate the best (lowest) possible value of cross entropy, and
@@ -106,7 +113,7 @@ class Transformer(Model):
                 low_confidence * math.log(low_confidence + 1e-20))
             xentropy = xentropy - normalizing_constant
 
-            weights = 1.0 - K.squeeze(K.slice(y_true, (0, 0, 0), (-1, -1, 1)), axis=2)
+            weights = 1.0 - K.squeeze(K.slice(y_true_ohe, (0, 0, 0), (-1, -1, 1)), axis=2)
 
             xentropy = xentropy * weights
 

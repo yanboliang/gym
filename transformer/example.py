@@ -6,12 +6,13 @@ from transformer import Transformer
 from test_utils import printoptions
 from model_params import TransformerBaseParams
 
+
 if __name__ == '__main__':
     np.random.seed(1)
 
     params = TransformerBaseParams()
 
-    num_examples = 1000
+    num_examples = 100
     seq_len_x = 10
     seq_len_y = 10
 
@@ -21,16 +22,14 @@ if __name__ == '__main__':
         assert rlen > 3
         for i in range(nsize):
             tlen = np.random.randint(3, rlen + 1)
-            raw[i][tlen - 1] = 1.0
+            raw[i][tlen - 1] = 1
             for j in range(tlen, rlen):
-                raw[i][j] = 0.0
+                raw[i][j] = 0
 
     my_input_x_raw = np.random.randint(2, params.vocab_size, size=(num_examples, seq_len_x))
     my_input_y_raw = np.random.randint(2, params.vocab_size, size=(num_examples, seq_len_y))
     set_input_padding(my_input_x_raw)
     set_input_padding(my_input_y_raw)
-
-    my_target_onehot = to_categorical(my_input_y_raw, params.vocab_size)
 
     transformer = Transformer(params)
 
@@ -38,8 +37,8 @@ if __name__ == '__main__':
                   loss=transformer.get_loss())
 
     transformer.fit(x=[my_input_x_raw, my_input_y_raw],
-                    y=my_target_onehot,
-                    epochs=5,
+                    y=my_input_y_raw,
+                    epochs=1,
                     batch_size=256)
 
     pred = transformer.predict(x=[my_input_x_raw[0:10], None], batch_size=256)

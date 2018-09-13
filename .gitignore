@@ -3,3 +3,4 @@
 transformer/.idea/
 *.pyc
 __pycache__/*
+*.iml
