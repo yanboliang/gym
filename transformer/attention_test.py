@@ -8,10 +8,10 @@ from official.transformer.model.transformer import PrePostProcessingWrapper as T
 from official.transformer.model.model_utils import get_padding_bias as tf_get_padding_bias
 from official.transformer.model.model_utils import get_decoder_self_attention_bias as tf_get_decoder_self_attention_bias
 
-from attention import Attention as KAttention, SelfAttention as KSelfAttention
-from transformer import PrePostProcessingWrapper as KPrePostProcessingWrapper
+from attention import Attention as KAttention
+from transformer import pre_post_processor_wrapper as k_pre_post_processor_wrapper
 from model_utils import get_padding_bias as k_get_padding_bias
-from model_utils import get_decoder_self_attention_bias as k_get_decoder_self_attention_bias
+from model_utils import get_decoder_self_attention_bias_from_len as k_get_decoder_self_attention_bias_from_len
 from test_utils import rel_cmp
 
 if __name__ == '__main__':
@@ -100,16 +100,18 @@ if __name__ == '__main__':
     print("tf self Attention output:")
     print(tf_self_attention_res)
 
+    K.set_learning_phase(0)
+
     k_attention = KAttention(hidden_size=hidden_size,
                              num_heads=num_heads,
-                             attention_dropout=0.5)
+                             attention_dropout=0.5,
+                             is_self_attention=False)
     k_input_x = Input(shape=(_seq_len_x, hidden_size))
     k_input_y = Input(shape=(_seq_len_y, hidden_size))
     k_input_y_raw = Input(shape=(_seq_len_y,))
 
     k_output = k_attention([k_input_x, k_input_y,
-                            k_get_padding_bias(k_input_y_raw)],
-                           train=False)
+                            k_get_padding_bias(k_input_y_raw)])
     # assign keras weight
     tf_sess.run([
         tf.assign(k_attention.q_dense_layer.kernel, weight_q),
@@ -123,12 +125,17 @@ if __name__ == '__main__':
     print("keras Attention output:")
     print(k_res)
 
-    k_self_attention = KSelfAttention(hidden_size=hidden_size,
-                                      num_heads=num_heads,
-                                      attention_dropout=0.5)
-    k_wrapper = KPrePostProcessingWrapper(k_self_attention, params)
-    bias = k_get_decoder_self_attention_bias(seq_len_y)
-    k_self_attention_output = k_wrapper([k_input_y, bias], train=False)
+    k_self_attention = KAttention(hidden_size=hidden_size,
+                                  num_heads=num_heads,
+                                  attention_dropout=0.5,
+                                  is_self_attention=True)
+    # k_wrapper = KPrePostProcessingWrapper(k_self_attention, params)
+    bias = k_get_decoder_self_attention_bias_from_len(seq_len_y)
+    # k_self_attention_output = k_wrapper([k_input_y, bias], train=False)
+    def self_attention_processor(inputs):
+        return k_self_attention(inputs), k_self_attention
+    k_self_attention_output, k_wrapper =\
+        k_pre_post_processor_wrapper(self_attention_processor, [k_input_y, bias], params)
     # assign keras weight
     tf_sess.run([
         tf.assign(k_self_attention.q_dense_layer.kernel, weight_q),

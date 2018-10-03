@@ -6,7 +6,7 @@ from keras import backend as K
 from official.transformer.model.transformer import Transformer as TFTransformer
 from official.transformer.model import model_utils as tf_model_utils
 
-from transformer import Transformer as KTransformer
+from transformer import transformer as ktransformer, transformer_predict as ktransformer_predict
 import model_utils as k_model_utils
 from test_utils import printoptions, rel_cmp
 
@@ -42,7 +42,7 @@ class Params(object):
     filter_size = filter_size
     label_smoothing = 0.1
     extra_decode_length = 1
-    beam_size = 2
+    beam_size = 3
     alpha = 0.6
 
 
@@ -219,18 +219,19 @@ if __name__ == '__main__':
     with printoptions(threshold=2000):
         print(tf_pred_res)
 
-    k_transformer = KTransformer(params)
+    # K.set_learning_phase(0) default learning phase value is False.
+    k_transformer = ktransformer(params)
     k_input_x_raw = Input(shape=(_seq_len_x,))
     k_input_y_raw = Input(shape=(_seq_len_y,))
 
-    k_embedded_inputs = k_transformer.embedding_softmax_layer(k_input_x_raw)
-    k_pos_encoding = k_model_utils.get_position_encoding(seq_len_x, k_transformer.params.hidden_size)
-    k_embedding_inputs = k_embedded_inputs + k_pos_encoding
+    #k_embedded_inputs = k_transformer.embedding_softmax_layer(k_input_x_raw)
+    #k_pos_encoding = k_model_utils._get_position_encoding(seq_len_x, k_transformer.params.hidden_size)
+    #k_embedding_inputs = k_embedded_inputs + k_pos_encoding
 
-    k_attention_bias = k_model_utils.get_padding_bias(k_input_x_raw)
-    k_encoder_outputs = k_transformer.encode(k_input_x_raw, k_attention_bias, train=False)
+    #k_attention_bias = k_model_utils._get_padding_bias(k_input_x_raw)
+    # k_encoder_outputs = k_transformer.encode(k_input_x_raw, k_attention_bias, train=False)
 
-    k_output = k_transformer([k_input_x_raw, k_input_y_raw], train=False)
+    k_output = k_transformer([k_input_x_raw, k_input_y_raw])
 
     tf_sess.run(tf.global_variables_initializer())
     tf_sess.run(get_assign_list(k_transformer))
@@ -245,12 +246,19 @@ if __name__ == '__main__':
     print("max err: " + str(max_err))
     assert rel_cmp(tf_res, k_res, rel_tol=1e-1)
 
+    """
     k_pred_result = k_transformer._get_predict_function()([my_input_x_raw, None])[0]
     print("k prediction:")
     with printoptions(threshold=2000):
         print(k_pred_result)
 
     assert rel_cmp(tf_pred_res.astype(float), k_pred_result.astype(float))
+    """
+
+    k_pred_result = ktransformer_predict(k_transformer, params, my_input_x_raw)
+    print("k prediction:")
+    with printoptions(threshold=2000):
+        print(k_pred_result)
 
     print("test PASSed.")
     tf_sess.close()

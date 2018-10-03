@@ -2,7 +2,7 @@ from official.transformer.utils import metrics as tf_metrics
 
 import tensorflow as tf
 
-from transformer import Transformer as KTransformer
+from transformer import get_transformer_loss
 from transformer_test import Params as KParams
 
 from keras import Input
@@ -28,9 +28,8 @@ def k_loss_fn(logits, targets, label_smoothing, vocab_size):
     params.vocab_size = vocab_size
     params.label_smoothing = label_smoothing
 
-    k_transformer = KTransformer(params)
-    loss_fn = k_transformer.get_loss()
-    return loss_fn(targets, logits, with_xent=True)
+    loss_fn = get_transformer_loss(params, with_xent=True)
+    return loss_fn(targets, logits)
 
 
 if __name__ == '__main__':

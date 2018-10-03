@@ -1,8 +1,8 @@
 from official.transformer.model.ffn_layer import FeedFowardNetwork as TFFeedFowardNetwork
 from official.transformer.model.transformer import PrePostProcessingWrapper as TFPrePostProcessingWrapper
 
-from ffn import FeedFowardNetwork as KFeedFowardNetwork
-from transformer import PrePostProcessingWrapper as KPrePostProcessingWrapper
+from ffn import feed_forward_network as Kfeed_forward_network
+from transformer import pre_post_processor_wrapper as Kpre_post_processor_wrapper
 
 import tensorflow as tf
 import numpy as np
@@ -20,8 +20,11 @@ if __name__ == '__main__':
     _seq_len = 5
 
     class LayerParams(object):
-        layer_postprocess_dropout = 0.5
+        layer_postprocess_dropout = 0.3
         hidden_size = hidden_size
+        filter_size = filter_size
+        relu_dropout = 0.3
+
 
     params = LayerParams()
 
@@ -58,10 +61,16 @@ if __name__ == '__main__':
     print("tf output:")
     print(tf_res)
 
-    k_ffn = KFeedFowardNetwork(hidden_size, filter_size, relu_dropout=0.5)
+    K.set_learning_phase(0)
+    # k_ffn = KFeedFowardNetwork(hidden_size, filter_size, relu_dropout=0.5)
     k_input = Input(shape=(_seq_len, hidden_size))
-    k_wrapper = KPrePostProcessingWrapper(k_ffn, params)
-    k_output = k_wrapper(k_input, train=False)
+    # k_wrapper = KPrePostProcessingWrapper(k_ffn, params)
+    # k_output = k_wrapper(k_input, train=False)
+
+    def ffn_processor(inputs):
+        return Kfeed_forward_network(inputs, params)
+    k_output, k_wrapper = Kpre_post_processor_wrapper(ffn_processor, k_input, params)
+    k_ffn = k_wrapper.layer
 
     tf_sess.run([
         tf.assign(k_ffn.filter_dense_layer.kernel, weight_filter),

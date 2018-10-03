@@ -1,6 +1,6 @@
 import numpy as np
 
-from transformer import Transformer
+from transformer import transformer, get_transformer_loss, transformer_predict
 from test_utils import printoptions
 from model_params import TransformerBaseParams
 
@@ -30,13 +30,15 @@ if __name__ == '__main__':
     set_input_padding(x)
     set_input_padding(y)
 
-    transformer = Transformer(params)
+    transformer = transformer(params)
 
-    transformer.compile(optimizer="Adam", loss=transformer.get_loss())
+    transformer.summary()
+
+    transformer.compile(optimizer="Adam", loss=get_transformer_loss(params))
 
     transformer.fit(x=[x, y], y=y, epochs=1, batch_size=256)
 
-    pred = transformer.predict(x=[x[0:10], None], batch_size=256)
+    pred = transformer_predict(transformer, params, x[0:10])
 
     print("pred result (first 100):")
     with printoptions(threshold=3000):

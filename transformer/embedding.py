@@ -27,24 +27,31 @@ class EmbeddingSharedWeights(Layer):
         self.built = True
 
     def compute_output_shape(self, input_shape):
-        return input_shape + (self.hidden_size,)
+        if len(input_shape) == 2: # (batch_size, length)
+            return input_shape + (self.hidden_size,)
+        elif len(input_shape) == 3: # (batch_size, length, hidden_size)
+            return input_shape[0:2] + (self.vocab_size,)
+        else:
+            raise Exception("embedding compute output shape error.")
 
-    def call(self, inputs, **kwargs):
-        if K.dtype(inputs) != 'int32':
-            inputs = K.cast(inputs, 'int32')
-        embeddings = K.gather(self.shared_weights, inputs)
+    def call(self, inputs, do_embedding=True):
+        if do_embedding:
+            if K.dtype(inputs) != 'int32':
+                inputs = K.cast(inputs, 'int32')
+            embeddings = K.gather(self.shared_weights, inputs)
 
-        # Scale embedding by the sqrt of the hidden size
-        embeddings *= self.hidden_size ** 0.5
+            # Scale embedding by the sqrt of the hidden size
+            embeddings *= self.hidden_size ** 0.5
 
-        # Create binary array of size [batch_size, length]
-        # where 1 = padding, 0 = not padding
-        padding = get_padding(inputs)
+            # Create binary array of size [batch_size, length]
+            # where 1 = padding, 0 = not padding
+            padding = get_padding(inputs)
 
-        # Set all padding embedding values to 0
-        embeddings *= K.expand_dims(1 - padding, -1)
-
-        return embeddings
+            # Set all padding embedding values to 0
+            embeddings *= K.expand_dims(1 - padding, -1)
+            return embeddings
+        else:
+            return self.linear(inputs)
 
     def linear(self, x):
         shape = K.shape(x)
