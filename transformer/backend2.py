@@ -15,10 +15,6 @@ def pad(tensor, paddings, constant_values=0):
     return tf.pad(tensor, paddings, mode='CONSTANT', constant_values=constant_values)
 
 
-def range(start, limit, delta=1, dtype=None):
-    return tf.range(start, limit, delta, dtype)
-
-
 def sequence_beam_search(
         symbols_to_logits_fn, initial_ids, initial_cache, vocab_size, beam_size,
         alpha, max_decode_length, eos_id):

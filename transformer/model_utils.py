@@ -52,13 +52,13 @@ def get_position_encoding(
     Returns:
       Tensor with shape [length, hidden_size]
     """
-    position = K.cast(K2.range(0, length), 'float32')
+    position = K.cast(K.arange(0, length), 'float32')
     num_timescales = hidden_size // 2
     log_timescale_increment = (
         math.log(float(max_timescale) / float(min_timescale)) /
         (float(num_timescales) - 1.0))
     inv_timescales = min_timescale * K.exp(
-        K.cast(K2.range(0, num_timescales), 'float32') * (-log_timescale_increment))
+        K.cast(K.arange(0, num_timescales), 'float32') * (-log_timescale_increment))
     scaled_time = K.expand_dims(position, 1) * K.expand_dims(inv_timescales, 0)
     signal = K.concatenate([K.sin(scaled_time), K.cos(scaled_time)], axis=1)
     return signal
